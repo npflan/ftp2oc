@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cisco
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ftp2oc
+  name: ftp2oc
+  namespace: cisco
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ftp2oc
+  template:
+    metadata:
+      labels:
+        app: ftp2oc
+    spec:
+      containers:
+      - env:
+        - name: FTP_USERNAME
+          value: npf
+        - name: FTP_PASSWORD
+          value: REDACTED
+        - name: OWNCLOUD_URL
+          value: http://owncloud.npf.dk
+        - name: OWNCLOUD_USERNAME
+          value: network
+        - name: OWNCLOUD_PASSWORD
+          value: REDACTED
+        - name: OWNCLOUD_BASEDIR
+          value: /Netværk/2019/switch/
+        image: npflan/ftp2oc
+        imagePullPolicy: IfNotPresent
+        name: ftp2oc
+        ports:
+        - containerPort: 21
+          protocol: TCP
+        resources:
+          limits:
+            memory: 100M
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ftp2oc
+  name: ftp2oc
+  namespace: cisco
+spec:
+  clusterIP: 10.99.229.153
+  ports:
+  - name: ftp
+    port: 21
+    protocol: TCP
+    targetPort: 21
+  - name: ftpa
+    port: 20
+    protocol: TCP
+    targetPort: 20
+  selector:
+    app: ftp2oc
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
